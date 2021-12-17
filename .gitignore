@@ -1,0 +1,12 @@
+# data file
+data/
+
+# hidden directory
+.git/
+.idea/
+.ipynb_checkpoints/
+
+# binary
+*.pyc
+
+playground/
