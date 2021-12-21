@@ -1,13 +1,16 @@
 import ast
-from _ast import AST
+from _ast import AST, Assign, Call
 from typing import Any
 from spiral import ronin
+import copy
 
+MAX_ASSIGN_LEFT_VALUE = 3
 
 class CallExtractor(ast.NodeVisitor):
 
     def __init__(self):
         self.ans = []
+        self.ctx = []
 
     def visit_and_save(self, node: AST, ans) -> Any:
         self.ans = ans
@@ -36,34 +39,74 @@ class CallExtractor(ast.NodeVisitor):
         
         return True
 
+    def visit_Assign(self, node: Assign) -> Any:
+        self.generic_visit(node)
+        res = [copy.copy(self.ctx), 'Assign']
+        for target in node.targets[:MAX_ASSIGN_LEFT_VALUE]:
+            res.append(target.id)
+        self.ans.append(res)
+
+    def get_call_stk(self, node):
+        prt_stk = []
+        cur = node.func
+        while isinstance(cur, ast.Attribute) \
+                and not isinstance(cur.value, ast.Call):
+            prt_stk.append(cur.attr)
+            cur = cur.value
+        if hasattr(cur, 'id'):
+            prt_stk.append(cur.id)
+        elif hasattr(cur, 'attr'):
+            prt_stk.append(cur.attr)
+        return prt_stk
+
+    def get_actor(self, node:Call):
+        # case1: db.execute().get()
+        if isinstance(node.func.value, ast.Call):
+            prt_stk = self.get_call_stk(node.func.value)
+            return '.'.join(prt_stk[::-1])
+        # case2: ''.join()
+        elif isinstance(node.func.value, ast.Constant):
+            return '$Const$'
+        else:
+            return ''
+
     def visit_Call(self, node):
         self.generic_visit(node)
         if isinstance(node.func, ast.Attribute):
-            prt_stk = []
-            cur = node.func
-            while isinstance(cur, ast.Attribute) \
-                    and not isinstance(cur.value, ast.Call):
-                prt_stk.append(cur.attr)
-                cur = cur.value
-            if hasattr(cur, 'id'):
-                prt_stk.append(cur.id)
-            elif hasattr(cur, 'attr'):
-                prt_stk.append(cur.attr)
-            self.ans.append('.'.join(prt_stk[::-1]))
+            actor = self.get_actor(node)
+            res = None
+            # case2: ''.join()
+            if isinstance(node.func.value, ast.Constant):
+                prt_stk = node.func.attr
+                res = [copy.copy(self.ctx), 'Call', actor, prt_stk]
+            else:
+                prt_stk = self.get_call_stk(node)
+                if actor != '':
+                    res = '.'.join(prt_stk[::-1])
+                    res = [copy.copy(self.ctx), 'Call', actor, res]
+                else:
+                    res = '.'.join(prt_stk[:-1][::-1])
+                    res = [copy.copy(self.ctx), 'Call', prt_stk[-1], res]
+            self.ans.append(res)
         else:
             if hasattr(node.func, 'id'):
-                self.ans.append(node.func.id)
+                self.ans.append([copy.copy(self.ctx), 'Call', '$', node.func.id])
             elif hasattr(node.func, 'attr'):
-                self.ans.append(node.func.attr)
+                self.ans.append([copy.copy(self.ctx), 'Call', '$', node.func.attr])
+
 
     def visit_Return(self, node):
         self.generic_visit(node)
-        self.ans.append('*#')
+        self.ans.append([copy.copy(self.ctx), 'Return'])
 
     def visit_FunctionDef(self, node):
-        self.ans.append('*' + node.name)
+        self.ans.append('*' * (len(self.ctx) + 1) + node.name)
+        self.ctx.append(node.name)
         self.generic_visit(node)
-        self.ans.append('#' + node.name)
+        self.ans.append('#' * (len(self.ctx) + 1) + node.name)
+        self.ctx.pop(-1)
+
+
 
 def trim_by_method(seqs):
     res = seqs[1:]
