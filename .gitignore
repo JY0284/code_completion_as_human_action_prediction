@@ -10,3 +10,7 @@ data/
 *.pyc
 
 playground/
+libs/
+runs/
+models/
+colab_/
