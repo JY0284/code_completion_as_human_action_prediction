@@ -43,7 +43,10 @@ class CallExtractor(ast.NodeVisitor):
         self.generic_visit(node)
         res = [copy.copy(self.ctx), 'Assign']
         for target in node.targets[:MAX_ASSIGN_LEFT_VALUE]:
+            if hasattr(target, 'id'):
             res.append(target.id)
+            elif hasattr(target, 'attr'):
+                res.append(target.attr)
         self.ans.append(res)
 
     def get_call_stk(self, node):
@@ -103,6 +106,7 @@ class CallExtractor(ast.NodeVisitor):
         self.ans.append('*' * (len(self.ctx) + 1) + node.name)
         self.ctx.append(node.name)
         self.generic_visit(node)
+        self.ctx.pop(-1)
         self.ans.append('#' * (len(self.ctx) + 1) + node.name)
         self.ctx.pop(-1)
 
