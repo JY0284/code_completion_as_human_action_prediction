@@ -3,8 +3,8 @@ from _ast import AST, Assign, Call
 from typing import Any
 from spiral import ronin
 import copy
+from model import *
 
-MAX_ASSIGN_LEFT_VALUE = 3
 
 class CallExtractor(ast.NodeVisitor):
 
@@ -36,17 +36,17 @@ class CallExtractor(ast.NodeVisitor):
             return False
         if ast_obj is not None:
             self.visit_and_save(ast_obj, ans)
-        
+
         return True
 
     def visit_Assign(self, node: Assign) -> Any:
         self.generic_visit(node)
-        res = [copy.copy(self.ctx), 'Assign']
+        res = [copy.copy(self.ctx), ASSIGN_TOKEN, []]
         for target in node.targets[:MAX_ASSIGN_LEFT_VALUE]:
             if hasattr(target, 'id'):
-            res.append(target.id)
+                res[-1].append(target.id)
             elif hasattr(target, 'attr'):
-                res.append(target.attr)
+                res[-1].append(target.attr)
         self.ans.append(res)
 
     def get_call_stk(self, node):
@@ -62,45 +62,65 @@ class CallExtractor(ast.NodeVisitor):
             prt_stk.append(cur.attr)
         return prt_stk
 
-    def get_actor(self, node:Call):
+    def get_actor(self, node: Call):
         # case1: db.execute().get()
         if isinstance(node.func.value, ast.Call):
             prt_stk = self.get_call_stk(node.func.value)
             return '.'.join(prt_stk[::-1])
         # case2: ''.join()
         elif isinstance(node.func.value, ast.Constant):
-            return '$Const$'
+            return CONST_TOKEN
         else:
             return ''
 
+    def get_paras(self, node: Call):
+        paras = []
+        for arg in node.args:
+            if hasattr(arg, 'id'):
+                paras.append(arg.id)
+            elif hasattr(arg, 'attr'):
+                paras.append(arg.attr)
+            elif isinstance(arg, ast.Constant):
+                if arg.value is None:
+                    continue
+                # if isinstance(arg.value, str) and \
+                #         len(arg.value) <= MAX_PARA_CONSTANT_LEN:
+                #     paras.append(arg.value)
+                # else:
+                #     continue
+                paras.append(CONST_TOKEN)
+
+        # print(paras)
+        return paras
+
     def visit_Call(self, node):
         self.generic_visit(node)
+        paras = self.get_paras(node)
         if isinstance(node.func, ast.Attribute):
             actor = self.get_actor(node)
             res = None
             # case2: ''.join()
             if isinstance(node.func.value, ast.Constant):
                 prt_stk = node.func.attr
-                res = [copy.copy(self.ctx), 'Call', actor, prt_stk]
+                res = [copy.copy(self.ctx), CALL_TOKEN, actor, prt_stk, paras]
             else:
                 prt_stk = self.get_call_stk(node)
                 if actor != '':
                     res = '.'.join(prt_stk[::-1])
-                    res = [copy.copy(self.ctx), 'Call', actor, res]
+                    res = [copy.copy(self.ctx), CALL_TOKEN, actor, res, paras]
                 else:
                     res = '.'.join(prt_stk[:-1][::-1])
-                    res = [copy.copy(self.ctx), 'Call', prt_stk[-1], res]
+                    res = [copy.copy(self.ctx), CALL_TOKEN, prt_stk[-1], res, paras]
             self.ans.append(res)
         else:
             if hasattr(node.func, 'id'):
-                self.ans.append([copy.copy(self.ctx), 'Call', '$', node.func.id])
+                self.ans.append([copy.copy(self.ctx), CALL_TOKEN, '$', node.func.id, paras])
             elif hasattr(node.func, 'attr'):
-                self.ans.append([copy.copy(self.ctx), 'Call', '$', node.func.attr])
-
+                self.ans.append([copy.copy(self.ctx), CALL_TOKEN, '$', node.func.attr, paras])
 
     def visit_Return(self, node):
         self.generic_visit(node)
-        self.ans.append([copy.copy(self.ctx), 'Return'])
+        self.ans.append([copy.copy(self.ctx), RETURN_TOKEN])
 
     def visit_FunctionDef(self, node):
         self.ans.append('*' * (len(self.ctx) + 1) + node.name)
@@ -108,8 +128,6 @@ class CallExtractor(ast.NodeVisitor):
         self.generic_visit(node)
         self.ctx.pop(-1)
         self.ans.append('#' * (len(self.ctx) + 1) + node.name)
-        self.ctx.pop(-1)
-
 
 
 def trim_by_method(seqs):
@@ -118,8 +136,9 @@ def trim_by_method(seqs):
     tmp = []
     for seq in res:
         tmp.append([call if call.find('.') == -1 else call[len(call) - call[::-1].find('.'):] for call in seq])
-    
+
     return tmp
+
 
 def extract_seq_by_method(origin_lst, threshold=2, trim=False):
     outside = []
@@ -137,7 +156,6 @@ def extract_seq_by_method(origin_lst, threshold=2, trim=False):
                 if e[1:] == func_stk[-1][0][1:]:
                     res_stk.append(func_stk.pop())
                 else:
-#                     print(e)
                     raise BaseException('Error')
             else:
                 func_stk[-1].append(e)
@@ -156,11 +174,12 @@ def split_and_make_sense(seq):
         if call == '*#':
             tmp.append(['return'])
             continue
-        
+
         splits = ronin.split(call)
         if len(splits) > 0:
-            tmp.append([word.lower() if len(word) > 1 and word[0].isupper() and word[1].islower() else word for word in splits])
-    
+            tmp.append([word.lower() if len(word) > 1 and word[0].isupper() and word[1].islower() else word for word in
+                        splits])
+
     return tmp
 
 

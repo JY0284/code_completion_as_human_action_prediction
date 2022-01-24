@@ -1,6 +1,6 @@
 import json
 import pickle
-from src.analysis.model import Quad
+from model import *
 
 
 def get_py_name(fpath: str):
@@ -11,22 +11,32 @@ def get_py_name(fpath: str):
 def raw_quads_to_objects(raw_quads: dict):
     objs = []
     for f_name, content in raw_quads.items():
+        ori_name = f_name
         f_name = get_py_name(f_name)[:-3]
         res_lst = extract_by_method(content)
+        e = None
         for m_res in res_lst:
             try:
                 for e in m_res:
+                    e = e
                     obj = Quad()
+                    objs.append(obj)
                     obj.ctx = [f_name] + e[0]
                     obj.type = e[1]
-                    if obj.type in ['Assign', 'Return']:
+                    if obj.type in RETURN_TOKEN:
                         continue
+                    if isinstance(e[2], list):
                     obj.actor = e[2]
+                    else:
+                        obj.actor = [e[2]]
+                    if obj.type in ASSIGN_TOKEN:
+                        continue
                     obj.call = e[3]
-                    objs.append(obj)
+                    obj.paras = e[4]
             except BaseException as exp:
                 print(e)
                 print(exp)
+                print(ori_name)
     return objs
 
 
