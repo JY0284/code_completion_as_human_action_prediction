@@ -17,13 +17,14 @@ def save_data(output_file):
 
 
 """
+# Project name and file name will be the part of the context information when modeling to action sequence, ignore in the following demo for simplicity.
 save data:
-database : being db connect, 'dummy_db'
-database : execute, 'dummy_sql_command'
+database ~ db connect, 'raw_db'
+database : execute, 'QUERY_SQL_CMD'
 database : get, @
-target data ~ database : 这里是database最新的encoding结果 // database.execute('dummy_sql_command').get()
+target rows ~ database // database.execute('dummy_sql_command').get()
 database : disconnect, @
-target file : being open, 'tmp.txt' 'w'
-target file : write, $target_data
+target file ~ open, 'tmp.txt' 'w'
+target file : write, target rows
 target file : close, @
 """
