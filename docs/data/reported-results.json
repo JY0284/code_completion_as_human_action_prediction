@@ -1,0 +1,55 @@
+{
+  "description": "Reported results transcribed from the repository paper draft, retaining the precision printed in the source.",
+  "paper_doi": "10.1145/3545258.3545263",
+  "source_file": "Represent_Code_as_Action_Sequence_for_Predicting_Next_Method_Call_draft.pdf",
+  "source_sha256": "29174e6948e6fcbf5b30037fa5acef924618af4995e3e0017f78e54dc39cf24c",
+  "page_numbering": "1-based PDF pages",
+  "review_date": "2026-10-19",
+  "accuracy_unit": "percent (0 to 100)",
+  "prediction_target": "Draft: next method call token. Slides page 20: first word of method call. BPE matching rules not released.",
+  "window_unit": "actions, not BPE tokens; Figure 6 includes the partially visible target action",
+  "context_parameter": "max_context_length; exact experimental treatment of special markers is not verifiable from the released code",
+  "table_2": {
+    "source": "Table 2, PDF page 6",
+    "repositories": 13006,
+    "source_code_files": 441290,
+    "methods": 3550572,
+    "lines": 85238675,
+    "tokens": 73335634,
+    "unique_tokens": 175143,
+    "token_count_note": "The counting stage is not specified; do not reinterpret these as verified BPE training-token counts."
+  },
+  "table_3": {
+    "source": "Table 3 and Section 6.1.2, PDF page 6",
+    "train_methods": 311801,
+    "test_methods_by_window": {"4": 17785, "6": 13984, "8": 11015},
+    "selected_test_sequences_per_experiment": 30000
+  },
+  "figure_7": {
+    "source": "Figure 7, PDF page 7",
+    "baseline_accuracy_percent_by_window": {"4": "47.86", "6": "62.99", "8": "61.89"},
+    "contextual_action_bars_max_context_length": 5
+  },
+  "abstract": {
+    "source": "Abstract, PDF page 1; also slides page 20",
+    "accuracy_percent": "81.92",
+    "baseline_accuracy_percent": "61.89"
+  },
+  "table_5": {
+    "source": "Table 5, PDF page 9",
+    "window_order": [4, 6, 8],
+    "rows": [
+      {"max_context_length": 0, "accuracy_percent": ["54.28", "63.46", "65.34"]},
+      {"max_context_length": 1, "accuracy_percent": ["68.74", "77.40", "80.56"]},
+      {"max_context_length": 2, "accuracy_percent": ["69.27", "76.63", "78.36"]},
+      {"max_context_length": 3, "accuracy_percent": ["71.99", "78.54", "81.78"]},
+      {"max_context_length": 4, "accuracy_percent": ["72.96", "78.60", "81.61"]},
+      {"max_context_length": 5, "accuracy_percent": ["73.29", "78.60", "81.57"]},
+      {"max_context_length": 6, "accuracy_percent": ["73.50", "77.90", "81.75"]},
+      {"max_context_length": 7, "accuracy_percent": ["73.61", "78.77", "81.93"]}
+    ],
+    "confidence_intervals": null,
+    "independent_run_count": null,
+    "unknown_note": "Null means not supplied in the draft, not zero uncertainty or zero runs."
+  }
+}

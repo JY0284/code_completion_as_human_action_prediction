@@ -1,6 +1,11 @@
 # data file
 data/
 
+# Reported paper statistics used by the documentation figure
+!/docs/data/
+/docs/data/*
+!/docs/data/reported-results.json
+
 # hidden directory
 .git/
 .idea/

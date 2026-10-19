@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this research, please cite the paper below."
+title: "Next method call prediction with Python action sequences"
+type: software
+authors:
+  - family-names: Jiang
+    given-names: Yu
+  - family-names: Wang
+    given-names: Liang
+  - family-names: Hu
+    given-names: Hao
+  - family-names: Tao
+    given-names: Xianping
+repository-code: "https://github.com/JY0284/code_completion_as_human_action_prediction"
+preferred-citation:
+  type: conference-paper
+  title: "Represent Code as Action Sequence for Predicting Next Method Call"
+  authors:
+    - family-names: Jiang
+      given-names: Yu
+    - family-names: Wang
+      given-names: Liang
+    - family-names: Hu
+      given-names: Hao
+    - family-names: Tao
+      given-names: Xianping
+  collection-title: "Proceedings of the 13th Asia-Pacific Symposium on Internetware"
+  year: 2022
+  start: 45
+  end: 54
+  doi: "10.1145/3545258.3545263"

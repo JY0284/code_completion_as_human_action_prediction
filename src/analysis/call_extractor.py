@@ -1,7 +1,6 @@
 import ast
 from _ast import AST, Assign, Call
 from typing import Any
-from spiral import ronin
 import copy
 from model import *
 
@@ -169,6 +168,9 @@ def extract_seq_by_method(origin_lst, threshold=2, trim=False):
 
 
 def split_and_make_sense(seq):
+    # Identifier splitting is optional for raw AST action extraction.
+    from spiral import ronin
+
     tmp = [seq[0]]
     for call in seq[1:]:
         if call == '*#':
@@ -184,6 +186,8 @@ def split_and_make_sense(seq):
 
 
 def split_seqs_by_method_to_one_long(seqs):
+    from spiral import ronin
+
     res = []
     for lst in seqs:
         res += [ronin.split(lst)]
